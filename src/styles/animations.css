@@ -1,0 +1,19 @@
+.holo-scan::after {
+  animation: scan 4.8s linear infinite;
+  background: linear-gradient(180deg, transparent, rgba(0, 245, 255, 0.18), transparent);
+  content: '';
+  inset: 0;
+  position: absolute;
+  transform: translateY(-100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

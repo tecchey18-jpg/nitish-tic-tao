@@ -1,0 +1,9 @@
+{
+  "name": "Neon Nexus",
+  "short_name": "Neon Nexus",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050711",
+  "theme_color": "#00f5ff",
+  "icons": []
+}

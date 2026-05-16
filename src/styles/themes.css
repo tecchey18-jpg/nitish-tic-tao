@@ -1,0 +1,20 @@
+.nexus-text {
+  background: linear-gradient(135deg, #00f5ff, #ff2bd6 48%, #9cff2e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glass-edge {
+  position: relative;
+}
+
+.glass-edge::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  content: '';
+  height: 1px;
+  left: 10%;
+  position: absolute;
+  right: 10%;
+  top: 0;
+}
