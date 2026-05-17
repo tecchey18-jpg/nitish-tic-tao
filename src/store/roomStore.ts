@@ -144,7 +144,7 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
         });
       }
 
-      if (polling) pollTimer = window.setTimeout(poll, 120);
+      if (polling) pollTimer = window.setTimeout(poll, 20);
     } catch (error) {
       const { endpoint } = get();
       set({
@@ -155,7 +155,7 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
     }
   };
 
-  pollTimer = window.setTimeout(poll, 80);
+  pollTimer = window.setTimeout(poll, 20);
 };
 
 export const useRoomStore = create<RoomState>((set, get) => ({

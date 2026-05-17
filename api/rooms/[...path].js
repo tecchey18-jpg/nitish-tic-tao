@@ -188,8 +188,8 @@ export default async function handler(request, response) {
 
     if (request.method === 'GET' && !action) {
       if (sinceVersion !== null && room.version <= sinceVersion) {
-        for (let attempt = 0; attempt < 24; attempt += 1) {
-          await sleep(250);
+        for (let attempt = 0; attempt < 120; attempt += 1) {
+          await sleep(50);
           const latestRoom = await getRoom(roomId);
           if (!latestRoom) {
             json(response, 404, { message: 'Room not found' });

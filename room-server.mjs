@@ -114,8 +114,8 @@ const server = createServer(async (request, response) => {
       const sinceVersion = getSinceVersion(url);
 
       if (sinceVersion !== null && room.version <= sinceVersion) {
-        for (let attempt = 0; attempt < 24; attempt += 1) {
-          await sleep(250);
+        for (let attempt = 0; attempt < 120; attempt += 1) {
+          await sleep(50);
           if (!rooms.has(roomPath.roomId)) {
             json(response, 404, { message: 'Room not found' });
             return;
