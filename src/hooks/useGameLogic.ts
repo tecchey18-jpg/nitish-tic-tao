@@ -66,8 +66,6 @@ export const useGameActions = () => {
   }, []);
 
   const resetMatch = useCallback(() => {
-    const room = useRoomStore.getState();
-    if (room.mode === 'online' && room.role === 'guest') return;
     const { boardSize } = useSettingsStore.getState();
 
     usePlayerStore.getState().resetScores();
@@ -76,8 +74,6 @@ export const useGameActions = () => {
   }, []);
 
   const nextRound = useCallback(() => {
-    const room = useRoomStore.getState();
-    if (room.mode === 'online' && room.role === 'guest') return;
     const { boardSize } = useSettingsStore.getState();
 
     useGameStore.getState().startRound(boardSize, true);
@@ -105,7 +101,7 @@ export const useGameActions = () => {
         usePlayerStore.getState().awardPoint(result.winnerId);
         const nextPlayers = usePlayerStore.getState().players.slice(0, playerCount);
         useGameStore.getState().finishRound('won', result.winnerId, result.line);
-        if (hasReachedTarget(nextPlayers, targetScore)) useGameStore.getState().completeMatch();
+        // if (hasReachedTarget(nextPlayers, targetScore)) useGameStore.getState().completeMatch();
         syncOnlineSnapshot();
         return;
       }

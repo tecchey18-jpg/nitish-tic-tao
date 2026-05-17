@@ -49,12 +49,12 @@ export const VictoryScene = () => {
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
               {status !== 'matchComplete' && (
-                <NeonButton onClick={nextRound} disabled={onlineGuest}>
+                <NeonButton onClick={nextRound}>
                   <StepForward size={16} />
                   Next Round
                 </NeonButton>
               )}
-              <NeonButton variant="secondary" onClick={resetMatch} disabled={onlineGuest}>
+              <NeonButton variant="secondary" onClick={resetMatch}>
                 <RotateCcw size={16} />
                 Reset
               </NeonButton>
