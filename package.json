@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev-with-rooms.mjs",
+    "dev:vite": "vite",
     "rooms": "node room-server.mjs",
     "dev:rooms": "node scripts/dev-with-rooms.mjs",
     "build": "tsc -b && vite build",

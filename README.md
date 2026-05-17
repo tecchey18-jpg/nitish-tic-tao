@@ -22,7 +22,7 @@ npm install
 npm run dev
 ```
 
-Vite will print the local URL, usually:
+The dev command starts both Vite and the room server. Vite will print the local URL, usually:
 
 ```txt
 http://127.0.0.1:5173

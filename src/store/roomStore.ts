@@ -26,8 +26,9 @@ interface RoomState {
 }
 
 const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
-const fallbackEndpoint = `${protocol}://${window.location.hostname}:8787`;
-const roomEndpoint = import.meta.env.VITE_ROOM_SERVER_URL ?? fallbackEndpoint;
+const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
+const fallbackEndpoint = `${protocol}://${hostname}:8787`;
+const roomEndpoint = (import.meta.env.VITE_ROOM_SERVER_URL ?? fallbackEndpoint).replace(/\/$/, '');
 
 let pollTimer: number | null = null;
 
@@ -60,6 +61,15 @@ const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   return payload;
 };
 
+const roomServerError = (endpoint: string, fallback: string, error: unknown) => {
+  const detail = error instanceof Error ? error.message : fallback;
+  if (detail === 'Failed to fetch' || detail.includes('fetch')) {
+    return `Room server not reachable at ${endpoint}. Run npm run dev:rooms and use the Vite URL from that terminal.`;
+  }
+
+  return detail || fallback;
+};
+
 const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => void) => {
   stopPolling();
 
@@ -87,9 +97,10 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
         });
       }
     } catch (error) {
+      const { endpoint } = get();
       set({
         connectionState: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Room sync failed'
+        errorMessage: roomServerError(endpoint, 'Room sync failed', error)
       });
     }
   }, 850);
@@ -128,10 +139,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       startPolling(get, set);
       return true;
     } catch (error) {
+      const { endpoint } = get();
       set({
         mode: 'local',
         connectionState: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Could not create room'
+        errorMessage: roomServerError(endpoint, 'Could not create room', error)
       });
       return false;
     }
@@ -165,10 +177,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       startPolling(get, set);
       return true;
     } catch (error) {
+      const { endpoint } = get();
       set({
         mode: 'local',
         connectionState: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Could not join room'
+        errorMessage: roomServerError(endpoint, 'Could not join room', error)
       });
       return false;
     }
@@ -213,9 +226,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
         errorMessage: null
       });
     } catch (error) {
+      const { endpoint } = get();
       set({
         connectionState: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Could not send move'
+        errorMessage: roomServerError(endpoint, 'Could not send move', error)
       });
     }
   }

@@ -17,6 +17,7 @@ export const RoomPanel = ({ compact = false }: RoomPanelProps) => {
   const [copied, setCopied] = useState(false);
   const mode = useRoomStore((state) => state.mode);
   const connectionState = useRoomStore((state) => state.connectionState);
+  const endpoint = useRoomStore((state) => state.endpoint);
   const roomId = useRoomStore((state) => state.roomId);
   const role = useRoomStore((state) => state.role);
   const seatPlayerId = useRoomStore((state) => state.seatPlayerId);
@@ -69,6 +70,7 @@ export const RoomPanel = ({ compact = false }: RoomPanelProps) => {
             {connectionState}
           </span>
         </div>
+        <p className="text-[11px] font-semibold text-slate-400">Server {endpoint}</p>
 
         {mode === 'online' && roomId ? (
           <div className="grid gap-3">
