@@ -18,7 +18,8 @@ export const GameBoard = memo(() => {
   const { makeMove } = useGameActions();
   const { currentPlayer } = usePlayerTurns();
   const { activeColor, lastMove, winningSet } = useBoardEffects();
-  const disabled = status !== 'playing' || (roomMode === 'online' && seatPlayerId !== currentPlayer?.id);
+  const isFirstMove = board.every((cell) => cell === null);
+  const disabled = status !== 'playing' || (!isFirstMove && roomMode === 'online' && seatPlayerId !== currentPlayer?.id);
 
   return (
     <section className="relative mx-auto w-full max-w-[min(86vw,620px)]">
