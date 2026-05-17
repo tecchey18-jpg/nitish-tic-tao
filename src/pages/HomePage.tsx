@@ -1,15 +1,16 @@
 import { Play, SlidersHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useGameLogic } from '../hooks/useGameLogic';
+import { useGameActions } from '../hooks/useGameLogic';
 import { useUiStore } from '../store/uiStore';
 import { GlassPanel } from '../components/ui/GlassPanel';
 import { NeonButton } from '../components/ui/NeonButton';
+import { RoomPanel } from '../components/online/RoomPanel';
 import { PlayerCustomizer } from '../components/players/PlayerCustomizer';
 import { ScoreBoard } from '../components/score/ScoreBoard';
 
 export const HomePage = () => {
   const setPage = useUiStore((state) => state.setPage);
-  const { startMatch } = useGameLogic();
+  const { startMatch } = useGameActions();
 
   const launch = () => {
     startMatch();
@@ -51,6 +52,7 @@ export const HomePage = () => {
           </div>
         </GlassPanel>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
+          <RoomPanel />
           <PlayerCustomizer />
           <ScoreBoard />
         </div>

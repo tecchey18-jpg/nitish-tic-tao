@@ -5,14 +5,14 @@ import { useSettingsStore } from '../../store/settingsStore';
 
 export const ParticleField = memo(() => {
   const reducedMotion = useSettingsStore((state) => state.reducedMotion);
-  const particles = useMemo(() => particleSeed(reducedMotion ? 14 : 38), [reducedMotion]);
+  const particles = useMemo(() => particleSeed(reducedMotion ? 8 : 24), [reducedMotion]);
 
   return (
     <div className="absolute inset-0">
       {particles.map((particle) => (
         <motion.span
           key={particle.id}
-          className="absolute rounded-full bg-cyan/80 will-change-transform"
+          className="absolute rounded-full bg-cyan/70 will-change-transform motion-reduce:hidden"
           style={{
             left: `${particle.x}%`,
             top: `${particle.y}%`,
@@ -21,10 +21,10 @@ export const ParticleField = memo(() => {
           }}
           animate={
             reducedMotion
-              ? { opacity: 0.35 }
-              : { y: [-12, 18, -12], opacity: [0.2, 0.85, 0.2], scale: [1, 1.8, 1] }
+              ? { opacity: 0.28 }
+              : { y: [-10, 14, -10], opacity: [0.16, 0.72, 0.16], scale: [1, 1.45, 1] }
           }
-          transition={{ duration: 4 + (particle.id % 5), repeat: Infinity, delay: particle.delay }}
+          transition={{ duration: 5 + (particle.id % 5), repeat: Infinity, delay: particle.delay }}
         />
       ))}
     </div>

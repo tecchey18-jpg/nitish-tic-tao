@@ -3,6 +3,7 @@ import { gameConfig } from '../config/gameConfig';
 import type { AiDifficulty, GameSettings } from '../types/game.types';
 
 interface SettingsState extends GameSettings {
+  applySettings: (settings: GameSettings) => void;
   setPlayerCount: (playerCount: number) => void;
   setBoardSize: (boardSize: number) => void;
   setWinCondition: (winCondition: number) => void;
@@ -22,6 +23,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   aiMode: false,
   aiDifficulty: 'normal',
   reducedMotion: false,
+  applySettings: (settings) => set(settings),
   setPlayerCount: (playerCount) =>
     set((state) => {
       const nextCount = clamp(playerCount, gameConfig.minPlayers, gameConfig.maxPlayers);

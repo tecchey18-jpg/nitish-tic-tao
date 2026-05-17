@@ -9,6 +9,7 @@ Neon Nexus is a production-minded futuristic multiplayer Tic Tac Toe arena built
 - Dynamic win conditions
 - AI mode with win/block/center/random move strategy
 - AI difficulty levels: Easy, Normal, Hard, and Nexus
+- Online 2-player room codes for playing from different browsers or devices
 - Multiple rounds, animated scoreboard, target score, round history
 - Winner celebration scene with confetti, fireworks, camera shake, and avatar reactions
 - Cyberpunk glass UI with neon glows, particle field, ripple waves, and GPU-friendly transforms
@@ -26,6 +27,16 @@ Vite will print the local URL, usually:
 ```txt
 http://127.0.0.1:5173
 ```
+
+## Online Rooms
+
+Run the app and room server together:
+
+```bash
+npm run dev:rooms
+```
+
+Open the Vite URL, choose **Create Room**, then share the 6-character room code. The second player opens the same app URL, enters the code, and joins as player 2. For two different networks, the app URL and room server port `8787` both need to be reachable by the second player.
 
 ## Production Build
 

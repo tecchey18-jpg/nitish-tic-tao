@@ -7,18 +7,23 @@ import { RoundHistory } from '../components/score/RoundHistory';
 import { ScoreBoard } from '../components/score/ScoreBoard';
 import { VictoryScene } from '../components/celebration/VictoryScene';
 import { NeonButton } from '../components/ui/NeonButton';
+import { RoomPanel } from '../components/online/RoomPanel';
 import { ArenaControls } from '../features/game/ArenaControls';
-import { useGameLogic } from '../hooks/useGameLogic';
+import { useGameActions } from '../hooks/useGameLogic';
 import { usePlayerTurns } from '../hooks/usePlayerTurns';
 import { useGameStore } from '../store/gameStore';
+import { useRoomStore } from '../store/roomStore';
 import { useUiStore } from '../store/uiStore';
 
 export const GamePage = () => {
   const status = useGameStore((state) => state.status);
   const winnerId = useGameStore((state) => state.winnerId);
+  const roomMode = useRoomStore((state) => state.mode);
+  const roomRole = useRoomStore((state) => state.role);
   const setPage = useUiStore((state) => state.setPage);
-  const { startMatch, resetMatch } = useGameLogic();
+  const { startMatch, resetMatch } = useGameActions();
   const { activePlayers, activePlayerIndex } = usePlayerTurns();
+  const onlineGuest = roomMode === 'online' && roomRole === 'guest';
 
   return (
     <CameraShake>
@@ -37,11 +42,11 @@ export const GamePage = () => {
 
         <aside className="grid content-start gap-4">
           <div className="grid grid-cols-2 gap-3">
-            <NeonButton onClick={startMatch} disabled={status === 'playing'}>
+            <NeonButton onClick={() => startMatch()} disabled={status === 'playing' || onlineGuest}>
               <Play size={16} />
               Start
             </NeonButton>
-            <NeonButton variant="danger" onClick={resetMatch}>
+            <NeonButton variant="danger" onClick={resetMatch} disabled={onlineGuest}>
               <RotateCcw size={16} />
               Reset
             </NeonButton>
@@ -50,6 +55,7 @@ export const GamePage = () => {
             <Settings size={16} />
             Settings
           </NeonButton>
+          <RoomPanel compact />
           <ArenaControls compact />
           <ScoreBoard />
         </aside>

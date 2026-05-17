@@ -2,12 +2,12 @@ import { Grid3X3, Users } from 'lucide-react';
 import { PlayerCustomizer } from '../components/players/PlayerCustomizer';
 import { NeonButton } from '../components/ui/NeonButton';
 import { ArenaControls } from '../features/game/ArenaControls';
-import { useGameLogic } from '../hooks/useGameLogic';
+import { useGameActions } from '../hooks/useGameLogic';
 import { useUiStore } from '../store/uiStore';
 
 export const SettingsPage = () => {
   const setPage = useUiStore((state) => state.setPage);
-  const { startMatch } = useGameLogic();
+  const { startMatch } = useGameActions();
 
   const launch = () => {
     startMatch();

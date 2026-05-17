@@ -6,6 +6,7 @@ import { GamePage } from './pages/GamePage';
 import { HomePage } from './pages/HomePage';
 import { ResultsPage } from './pages/ResultsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { useGameLogic } from './hooks/useGameLogic';
 import { useUiStore } from './store/uiStore';
 
 const pages = {
@@ -16,6 +17,7 @@ const pages = {
 };
 
 export const App = () => {
+  useGameLogic();
   const page = useUiStore((state) => state.page);
   const ActivePage = pages[page];
 

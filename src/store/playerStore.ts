@@ -4,6 +4,7 @@ import type { Player, PlayerDraft, PlayerId } from '../types/player.types';
 
 interface PlayerState {
   players: Player[];
+  setPlayers: (players: Player[]) => void;
   configurePlayers: (count: number, aiMode: boolean) => void;
   updatePlayer: (id: PlayerId, draft: PlayerDraft) => void;
   awardPoint: (id: PlayerId) => void;
@@ -12,6 +13,7 @@ interface PlayerState {
 
 export const usePlayerStore = create<PlayerState>((set) => ({
   players: defaultPlayers,
+  setPlayers: (players) => set({ players }),
   configurePlayers: (count, aiMode) =>
     set((state) => ({
       players: state.players.map((player, index) => ({

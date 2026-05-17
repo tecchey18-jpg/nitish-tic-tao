@@ -19,6 +19,7 @@ interface GameState {
   finishRound: (status: GameStatus, winnerId: PlayerId | null, line?: number[]) => void;
   completeMatch: () => void;
   resetMatch: (boardSize: number) => void;
+  hydrateGame: (game: Pick<GameState, 'board' | 'activePlayerIndex' | 'round' | 'status' | 'winnerId' | 'winningLine' | 'roundHistory' | 'lastMove'>) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -68,5 +69,6 @@ export const useGameStore = create<GameState>((set) => ({
       winningLine: [],
       roundHistory: [],
       lastMove: null
-    })
+    }),
+  hydrateGame: (game) => set(game)
 }));
