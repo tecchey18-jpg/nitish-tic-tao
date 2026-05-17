@@ -7,7 +7,6 @@ import type { GameSettings } from '../types/game.types';
 import { calculateWinner, isDraw } from '../utils/calculateWinner';
 import { chooseAiMove } from '../utils/aiStrategy';
 import { buildRoomSnapshot } from '../utils/roomSnapshot';
-import { hasReachedTarget } from '../utils/scoreHelpers';
 
 const syncOnlineSnapshot = () => {
   const room = useRoomStore.getState();
@@ -82,7 +81,7 @@ export const useGameActions = () => {
 
   const makeMove = useCallback(
     (index: number) => {
-      const { boardSize, playerCount, targetScore, winCondition } = useSettingsStore.getState();
+      const { boardSize, playerCount, winCondition } = useSettingsStore.getState();
       const activePlayers = usePlayerStore.getState().players.slice(0, playerCount);
       const game = useGameStore.getState();
       const currentPlayer = activePlayers[game.activePlayerIndex];
@@ -99,9 +98,7 @@ export const useGameActions = () => {
       const result = calculateWinner(nextBoard, boardSize, winCondition);
       if (result) {
         usePlayerStore.getState().awardPoint(result.winnerId);
-        const nextPlayers = usePlayerStore.getState().players.slice(0, playerCount);
         useGameStore.getState().finishRound('won', result.winnerId, result.line);
-        // if (hasReachedTarget(nextPlayers, targetScore)) useGameStore.getState().completeMatch();
         syncOnlineSnapshot();
         return;
       }

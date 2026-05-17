@@ -19,7 +19,6 @@ export const VictoryScene = () => {
   const winner = players.find((player) => player.id === winnerId);
   const open = status === 'won' || status === 'matchComplete' || status === 'draw';
   const colors = players.map((player) => player.color);
-  const onlineGuest = roomMode === 'online' && roomRole === 'guest';
 
   return (
     <AnimatePresence>
