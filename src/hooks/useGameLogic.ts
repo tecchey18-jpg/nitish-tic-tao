@@ -84,11 +84,26 @@ export const useGameActions = () => {
       const { boardSize, playerCount, winCondition } = useSettingsStore.getState();
       const activePlayers = usePlayerStore.getState().players.slice(0, playerCount);
       const game = useGameStore.getState();
-      const currentPlayer = activePlayers[game.activePlayerIndex];
       const room = useRoomStore.getState();
 
+      const isFirstMove = game.board.every((cell) => cell === null);
+      let currentPlayerIndex = game.activePlayerIndex;
+
+      if (isFirstMove && room.mode === 'online' && room.seatPlayerId) {
+        const clickingPlayerIndex = activePlayers.findIndex((p) => p.id === room.seatPlayerId);
+        if (clickingPlayerIndex !== -1) {
+          currentPlayerIndex = clickingPlayerIndex;
+        }
+      }
+
+      const currentPlayer = activePlayers[currentPlayerIndex];
+
       if (!currentPlayer || game.status !== 'playing' || game.board[index]) return;
-      if (room.mode === 'online' && room.seatPlayerId !== currentPlayer.id) return;
+      if (!isFirstMove && room.mode === 'online' && room.seatPlayerId !== currentPlayer.id) return;
+
+      if (isFirstMove && currentPlayerIndex !== game.activePlayerIndex) {
+        useGameStore.getState().setActivePlayerIndex(currentPlayerIndex);
+      }
 
       const nextBoard = [...game.board];
       nextBoard[index] = currentPlayer.id;
