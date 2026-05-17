@@ -12,6 +12,7 @@ const hasRedis = Boolean(redisUrl && redisToken);
 const requiresRedis = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_ENV);
 const missingRedisMessage =
   'Reliable room storage is not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel, then redeploy.';
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const redisRequest = async (command) => {
   if (!redisUrl || !redisToken) return null;
@@ -27,6 +28,7 @@ const redisRequest = async (command) => {
 
   const payload = await response.json();
   if (!response.ok) throw new Error('Redis room store failed');
+  if (payload[0]?.error) throw new Error(payload[0].error);
 
   return payload[0]?.result ?? null;
 };
@@ -59,6 +61,9 @@ const deleteRoom = async (roomId) => {
 };
 
 const json = (response, statusCode, payload) => {
+  response.setHeader('Cache-Control', 'no-store, max-age=0, s-maxage=0, must-revalidate');
+  response.setHeader('CDN-Cache-Control', 'no-store');
+  response.setHeader('Vercel-CDN-Cache-Control', 'no-store');
   response.status(statusCode).json(payload);
 };
 
@@ -97,6 +102,14 @@ const getPathParts = (request) => {
   return Array.isArray(rawPath) ? rawPath : [rawPath];
 };
 
+const getSinceVersion = (request) => {
+  const rawSince = Array.isArray(request.query.since) ? request.query.since[0] : request.query.since;
+  if (rawSince === undefined) return null;
+
+  const since = Number(rawSince);
+  return Number.isFinite(since) ? since : null;
+};
+
 const getBody = (request) => {
   if (!request.body) return {};
   if (typeof request.body === 'string') {
@@ -124,6 +137,7 @@ export default async function handler(request, response) {
     pruneMemoryRooms();
 
     const [roomId, action] = getPathParts(request);
+    const sinceVersion = getSinceVersion(request);
     const body = getBody(request);
 
     if (request.method === 'GET' && !roomId) {
@@ -166,13 +180,27 @@ export default async function handler(request, response) {
       return;
     }
 
-    const room = await getRoom(roomId);
+    let room = await getRoom(roomId);
     if (!room) {
       json(response, 404, { message: 'Room not found' });
       return;
     }
 
     if (request.method === 'GET' && !action) {
+      if (sinceVersion !== null && room.version <= sinceVersion) {
+        for (let attempt = 0; attempt < 24; attempt += 1) {
+          await sleep(250);
+          const latestRoom = await getRoom(roomId);
+          if (!latestRoom) {
+            json(response, 404, { message: 'Room not found' });
+            return;
+          }
+
+          room = latestRoom;
+          if (room.version > sinceVersion) break;
+        }
+      }
+
       await saveRoom(room);
       json(response, 200, room);
       return;

@@ -36,6 +36,7 @@ const roomEndpoint = configuredRoomEndpoint.endsWith('/api')
   : configuredRoomEndpoint;
 
 let pollTimer: number | null = null;
+let polling = false;
 
 const normalizeRoomId = (roomId: string) => roomId.trim().toUpperCase();
 
@@ -59,21 +60,25 @@ const roomUrl = (endpoint: string, roomId?: string, action?: string, since?: num
 };
 
 const stopPolling = () => {
+  polling = false;
   if (pollTimer !== null) {
-    window.clearInterval(pollTimer);
+    window.clearTimeout(pollTimer);
     pollTimer = null;
   }
 };
 
 const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(url, {
+    cache: 'no-store',
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
       ...init?.headers
     }
   });
-  const payload = (await response.json()) as T & { message?: string };
+  const text = await response.text();
+  const payload = (text ? JSON.parse(text) : {}) as T & { message?: string };
 
   if (!response.ok) {
     throw new Error(payload.message ?? 'Room server request failed');
@@ -107,10 +112,15 @@ const roomServerError = (endpoint: string, fallback: string, error: unknown) => 
 
 const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => void) => {
   stopPolling();
+  polling = true;
 
-  pollTimer = window.setInterval(async () => {
+  const poll = async () => {
+    if (!polling) return;
     const { endpoint, roomId, version } = get();
-    if (!roomId) return;
+    if (!roomId) {
+      stopPolling();
+      return;
+    }
 
     try {
       const state = normalizeRoomState(
@@ -133,14 +143,19 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
           errorMessage: null
         });
       }
+
+      if (polling) pollTimer = window.setTimeout(poll, 120);
     } catch (error) {
       const { endpoint } = get();
       set({
         connectionState: 'error',
         errorMessage: roomServerError(endpoint, 'Room sync failed', error)
       });
+      if (polling) pollTimer = window.setTimeout(poll, 1200);
     }
-  }, 850);
+  };
+
+  pollTimer = window.setTimeout(poll, 80);
 };
 
 export const useRoomStore = create<RoomState>((set, get) => ({

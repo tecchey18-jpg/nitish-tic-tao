@@ -5,12 +5,14 @@ const PORT = Number(process.env.ROOM_PORT ?? 8787);
 const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
 const PLAYER_IDS = ['p1', 'p2'];
 const rooms = new Map();
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const json = (response, statusCode, payload) => {
   response.writeHead(statusCode, {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
+    'Cache-Control': 'no-store, max-age=0, s-maxage=0, must-revalidate',
     'Content-Type': 'application/json'
   });
   response.end(JSON.stringify(payload));
@@ -45,6 +47,14 @@ const getRoomFromPath = (pathname) => {
   const match = pathname.match(/^\/rooms\/([A-Z0-9]{6})(?:\/(join|snapshot|leave))?$/);
   if (!match) return null;
   return { roomId: match[1], action: match[2] ?? null };
+};
+
+const getSinceVersion = (url) => {
+  const rawSince = url.searchParams.get('since');
+  if (rawSince === null) return null;
+
+  const since = Number(rawSince);
+  return Number.isFinite(since) ? since : null;
 };
 
 const server = createServer(async (request, response) => {
@@ -101,6 +111,19 @@ const server = createServer(async (request, response) => {
     }
 
     if (request.method === 'GET' && !roomPath.action) {
+      const sinceVersion = getSinceVersion(url);
+
+      if (sinceVersion !== null && room.version <= sinceVersion) {
+        for (let attempt = 0; attempt < 24; attempt += 1) {
+          await sleep(250);
+          if (!rooms.has(roomPath.roomId)) {
+            json(response, 404, { message: 'Room not found' });
+            return;
+          }
+          if (room.version > sinceVersion) break;
+        }
+      }
+
       room.updatedAt = Date.now();
       json(response, 200, room);
       return;
