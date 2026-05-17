@@ -36,7 +36,7 @@ let pollTimer: number | null = null;
 
 const normalizeRoomId = (roomId: string) => roomId.trim().toUpperCase();
 
-const samePlayers = (left: PlayerId[], right: PlayerId[]) =>
+const samePlayers = (left: PlayerId[] = [], right: PlayerId[] = []) =>
   left.length === right.length && left.every((playerId, index) => playerId === right[index]);
 
 const stopPolling = () => {
@@ -63,6 +63,18 @@ const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   return payload;
 };
 
+const normalizeRoomState = (state: RoomServerState): RoomServerState => {
+  if (!state?.roomId || !state?.snapshot) {
+    throw new Error('Room response is incomplete. Redeploy the latest room API and try again.');
+  }
+
+  return {
+    ...state,
+    players: Array.isArray(state.players) ? state.players : [],
+    version: Number.isFinite(state.version) ? state.version : 0
+  };
+};
+
 const roomServerError = (endpoint: string, fallback: string, error: unknown) => {
   const detail = error instanceof Error ? error.message : fallback;
   if (detail === 'Failed to fetch' || detail.includes('fetch')) {
@@ -82,7 +94,9 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
     if (!roomId) return;
 
     try {
-      const state = await requestJson<RoomServerState>(`${endpoint}/rooms/${roomId}?since=${version}`);
+      const state = normalizeRoomState(
+        await requestJson<RoomServerState>(`${endpoint}/rooms/${roomId}?since=${version}`)
+      );
 
       const current = get();
       const snapshotChanged = state.version > current.version;
@@ -94,7 +108,7 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
 
       if (snapshotChanged || playersChanged || current.connectionState !== 'connected' || current.errorMessage) {
         set({
-          connectedPlayers: playersChanged ? state.players : current.connectedPlayers,
+          connectedPlayers: playersChanged ? state.players : current.connectedPlayers ?? [],
           connectionState: 'connected',
           version: state.version,
           errorMessage: null
@@ -125,10 +139,12 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     set({ connectionState: 'connecting', errorMessage: null });
 
     try {
-      const state = await requestJson<RoomServerState>(`${get().endpoint}/rooms`, {
-        method: 'POST',
-        body: JSON.stringify({ snapshot })
-      });
+      const state = normalizeRoomState(
+        await requestJson<RoomServerState>(`${get().endpoint}/rooms`, {
+          method: 'POST',
+          body: JSON.stringify({ snapshot })
+        })
+      );
 
       set({
         mode: 'online',
@@ -163,9 +179,11 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     set({ connectionState: 'connecting', errorMessage: null });
 
     try {
-      const state = await requestJson<RoomServerState>(`${get().endpoint}/rooms/${normalizedRoomId}/join`, {
-        method: 'POST'
-      });
+      const state = normalizeRoomState(
+        await requestJson<RoomServerState>(`${get().endpoint}/rooms/${normalizedRoomId}/join`, {
+          method: 'POST'
+        })
+      );
 
       applyRoomSnapshot(state.snapshot);
       set({
@@ -218,10 +236,12 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     if (mode !== 'online' || !roomId || !seatPlayerId) return;
 
     try {
-      const state = await requestJson<RoomServerState>(`${endpoint}/rooms/${roomId}/snapshot`, {
-        method: 'POST',
-        body: JSON.stringify({ playerId: seatPlayerId, snapshot })
-      });
+      const state = normalizeRoomState(
+        await requestJson<RoomServerState>(`${endpoint}/rooms/${roomId}/snapshot`, {
+          method: 'POST',
+          body: JSON.stringify({ playerId: seatPlayerId, snapshot })
+        })
+      );
 
       set({
         connectedPlayers: state.players,

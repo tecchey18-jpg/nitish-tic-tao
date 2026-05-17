@@ -85,6 +85,19 @@ const getPathParts = (request) => {
   return Array.isArray(rawPath) ? rawPath : [rawPath];
 };
 
+const getBody = (request) => {
+  if (!request.body) return {};
+  if (typeof request.body === 'string') {
+    try {
+      return JSON.parse(request.body);
+    } catch {
+      return {};
+    }
+  }
+
+  return request.body;
+};
+
 export default async function handler(request, response) {
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
@@ -99,6 +112,7 @@ export default async function handler(request, response) {
     pruneMemoryRooms();
 
     const [roomId, action] = getPathParts(request);
+    const body = getBody(request);
 
     if (request.method === 'GET' && !roomId) {
       json(response, 200, { ok: true, rooms: hasRedis ? 'redis' : memoryRooms.size });
@@ -106,7 +120,7 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'POST' && !roomId) {
-      if (!request.body?.snapshot) {
+      if (!body.snapshot) {
         json(response, 400, { message: 'Missing game snapshot' });
         return;
       }
@@ -115,7 +129,7 @@ export default async function handler(request, response) {
       const room = {
         roomId: nextRoomId,
         version: 1,
-        snapshot: request.body.snapshot,
+        snapshot: body.snapshot,
         players: ['p1'],
         updatedAt: Date.now()
       };
@@ -157,16 +171,16 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'POST' && action === 'snapshot') {
-      if (!room.players.includes(request.body?.playerId)) {
+      if (!room.players.includes(body.playerId)) {
         json(response, 403, { message: 'Player is not in this room' });
         return;
       }
-      if (!request.body?.snapshot) {
+      if (!body.snapshot) {
         json(response, 400, { message: 'Missing game snapshot' });
         return;
       }
 
-      room.snapshot = request.body.snapshot;
+      room.snapshot = body.snapshot;
       room.version += 1;
       await saveRoom(room);
       json(response, 200, room);
@@ -174,7 +188,7 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'POST' && action === 'leave') {
-      room.players = room.players.filter((playerId) => playerId !== request.body?.playerId);
+      room.players = room.players.filter((playerId) => playerId !== body.playerId);
       room.version += 1;
 
       if (room.players.length === 0) {

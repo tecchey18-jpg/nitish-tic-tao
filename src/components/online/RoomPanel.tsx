@@ -21,7 +21,7 @@ export const RoomPanel = ({ compact = false }: RoomPanelProps) => {
   const roomId = useRoomStore((state) => state.roomId);
   const role = useRoomStore((state) => state.role);
   const seatPlayerId = useRoomStore((state) => state.seatPlayerId);
-  const connectedPlayers = useRoomStore((state) => state.connectedPlayers);
+  const connectedPlayers = useRoomStore((state) => state.connectedPlayers ?? []);
   const errorMessage = useRoomStore((state) => state.errorMessage);
   const createRoom = useRoomStore((state) => state.createRoom);
   const joinRoom = useRoomStore((state) => state.joinRoom);
