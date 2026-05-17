@@ -38,6 +38,8 @@ npm run dev:rooms
 
 Open the Vite URL, choose **Create Room**, then share the 6-character room code. The second player opens the same app URL, enters the code, and joins as player 2. For two different networks, the app URL and room server port `8787` both need to be reachable by the second player.
 
+On Vercel, room traffic uses same-origin API routes under `/api/rooms`, so redeploy after changing the room code. For reliable production rooms across cold starts, add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` environment variables in Vercel; without them, rooms use temporary serverless memory.
+
 ## Production Build
 
 ```bash

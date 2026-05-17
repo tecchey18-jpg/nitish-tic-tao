@@ -27,7 +27,9 @@ interface RoomState {
 
 const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
 const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
-const fallbackEndpoint = `${protocol}://${hostname}:8787`;
+const localRoomEndpoint = `${protocol}://${hostname}:8787`;
+const deployedRoomEndpoint = `${window.location.origin}/api`;
+const fallbackEndpoint = import.meta.env.DEV ? localRoomEndpoint : deployedRoomEndpoint;
 const roomEndpoint = (import.meta.env.VITE_ROOM_SERVER_URL ?? fallbackEndpoint).replace(/\/$/, '');
 
 let pollTimer: number | null = null;
@@ -64,7 +66,9 @@ const requestJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
 const roomServerError = (endpoint: string, fallback: string, error: unknown) => {
   const detail = error instanceof Error ? error.message : fallback;
   if (detail === 'Failed to fetch' || detail.includes('fetch')) {
-    return `Room server not reachable at ${endpoint}. Run npm run dev:rooms and use the Vite URL from that terminal.`;
+    return import.meta.env.DEV
+      ? `Room server not reachable at ${endpoint}. Run npm run dev and use the Vite URL from that terminal.`
+      : `Room server not reachable at ${endpoint}. Redeploy the latest code so Vercel includes the /api/rooms function.`;
   }
 
   return detail || fallback;
