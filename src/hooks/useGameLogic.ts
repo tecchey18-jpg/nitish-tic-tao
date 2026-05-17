@@ -124,7 +124,7 @@ export const useGameActions = () => {
         return;
       }
 
-      useGameStore.getState().setActivePlayerIndex((game.activePlayerIndex + 1) % activePlayers.length);
+      useGameStore.getState().setActivePlayerIndex((currentPlayerIndex + 1) % activePlayers.length);
       syncOnlineSnapshot();
     },
     []
