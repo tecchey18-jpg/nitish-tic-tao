@@ -7,14 +7,11 @@ import { ConfettiBlast } from './ConfettiBlast';
 import { FireworksEffect } from './FireworksEffect';
 import { WinnerAvatar } from './WinnerAvatar';
 import { NeonButton } from '../ui/NeonButton';
-import { useRoomStore } from '../../store/roomStore';
 
 export const VictoryScene = () => {
   const status = useGameStore((state) => state.status);
   const winnerId = useGameStore((state) => state.winnerId);
   const players = usePlayerStore((state) => state.players);
-  const roomMode = useRoomStore((state) => state.mode);
-  const roomRole = useRoomStore((state) => state.role);
   const { nextRound, resetMatch } = useGameActions();
   const winner = players.find((player) => player.id === winnerId);
   const open = status === 'won' || status === 'matchComplete' || status === 'draw';
