@@ -28,9 +28,12 @@ interface RoomState {
 const protocol = window.location.protocol === 'https:' ? 'https' : 'http';
 const hostname = window.location.hostname === 'localhost' ? '127.0.0.1' : window.location.hostname;
 const localRoomEndpoint = `${protocol}://${hostname}:8787`;
-const deployedRoomEndpoint = `${window.location.origin}/api`;
+const deployedRoomEndpoint = `${window.location.origin}/api/rooms`;
 const fallbackEndpoint = import.meta.env.DEV ? localRoomEndpoint : deployedRoomEndpoint;
-const roomEndpoint = (import.meta.env.VITE_ROOM_SERVER_URL ?? fallbackEndpoint).replace(/\/$/, '');
+const configuredRoomEndpoint = (import.meta.env.VITE_ROOM_SERVER_URL ?? fallbackEndpoint).replace(/\/$/, '');
+const roomEndpoint = configuredRoomEndpoint.endsWith('/api')
+  ? `${configuredRoomEndpoint}/rooms`
+  : configuredRoomEndpoint;
 
 let pollTimer: number | null = null;
 
@@ -38,6 +41,22 @@ const normalizeRoomId = (roomId: string) => roomId.trim().toUpperCase();
 
 const samePlayers = (left: PlayerId[] = [], right: PlayerId[] = []) =>
   left.length === right.length && left.every((playerId, index) => playerId === right[index]);
+
+const usesQueryApi = (endpoint: string) => endpoint.includes('/api/rooms');
+
+const roomUrl = (endpoint: string, roomId?: string, action?: string, since?: number) => {
+  if (usesQueryApi(endpoint)) {
+    const url = new URL(endpoint, window.location.origin);
+    if (roomId) url.searchParams.set('roomId', roomId);
+    if (action) url.searchParams.set('action', action);
+    if (since !== undefined) url.searchParams.set('since', String(since));
+    return url.toString();
+  }
+
+  const baseUrl = endpoint.endsWith('/rooms') ? endpoint : `${endpoint}/rooms`;
+  const pathUrl = `${baseUrl}${roomId ? `/${roomId}` : ''}${action ? `/${action}` : ''}`;
+  return since !== undefined ? `${pathUrl}?since=${since}` : pathUrl;
+};
 
 const stopPolling = () => {
   if (pollTimer !== null) {
@@ -95,7 +114,7 @@ const startPolling = (get: () => RoomState, set: (state: Partial<RoomState>) => 
 
     try {
       const state = normalizeRoomState(
-        await requestJson<RoomServerState>(`${endpoint}/rooms/${roomId}?since=${version}`)
+        await requestJson<RoomServerState>(roomUrl(endpoint, roomId, undefined, version))
       );
 
       const current = get();
@@ -140,7 +159,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
     try {
       const state = normalizeRoomState(
-        await requestJson<RoomServerState>(`${get().endpoint}/rooms`, {
+        await requestJson<RoomServerState>(roomUrl(get().endpoint), {
           method: 'POST',
           body: JSON.stringify({ snapshot })
         })
@@ -180,7 +199,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
     try {
       const state = normalizeRoomState(
-        await requestJson<RoomServerState>(`${get().endpoint}/rooms/${normalizedRoomId}/join`, {
+        await requestJson<RoomServerState>(roomUrl(get().endpoint, normalizedRoomId, 'join'), {
           method: 'POST'
         })
       );
@@ -213,7 +232,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     stopPolling();
 
     if (roomId && seatPlayerId) {
-      void fetch(`${endpoint}/rooms/${roomId}/leave`, {
+      void fetch(roomUrl(endpoint, roomId, 'leave'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerId: seatPlayerId })
@@ -237,7 +256,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
     try {
       const state = normalizeRoomState(
-        await requestJson<RoomServerState>(`${endpoint}/rooms/${roomId}/snapshot`, {
+        await requestJson<RoomServerState>(roomUrl(endpoint, roomId, 'snapshot'), {
           method: 'POST',
           body: JSON.stringify({ playerId: seatPlayerId, snapshot })
         })

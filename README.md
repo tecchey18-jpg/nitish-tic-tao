@@ -40,6 +40,13 @@ Open the Vite URL, choose **Create Room**, then share the 6-character room code.
 
 On Vercel, room traffic uses same-origin API routes under `/api/rooms`, so redeploy after changing the room code. For reliable production rooms across cold starts, add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` environment variables in Vercel; without them, rooms use temporary serverless memory.
 
+Production room creation on Vercel requires Redis. Add these Vercel environment variables before expecting online rooms to work reliably:
+
+```txt
+UPSTASH_REDIS_REST_URL
+UPSTASH_REDIS_REST_TOKEN
+```
+
 ## Production Build
 
 ```bash

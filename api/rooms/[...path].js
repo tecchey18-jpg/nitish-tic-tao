@@ -9,6 +9,9 @@ const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 const hasRedis = Boolean(redisUrl && redisToken);
+const requiresRedis = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_ENV);
+const missingRedisMessage =
+  'Reliable room storage is not configured. Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel, then redeploy.';
 
 const redisRequest = async (command) => {
   if (!redisUrl || !redisToken) return null;
@@ -59,15 +62,19 @@ const json = (response, statusCode, payload) => {
   response.status(statusCode).json(payload);
 };
 
-const createRoomId = () => {
+const buildRoomId = () => {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let roomId = '';
+  return Array.from({ length: 6 }, () => alphabet[randomInt(alphabet.length)]).join('');
+};
 
-  do {
-    roomId = Array.from({ length: 6 }, () => alphabet[randomInt(alphabet.length)]).join('');
-  } while (!hasRedis && memoryRooms.has(roomId));
+const createUniqueRoomId = async () => {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const roomId = buildRoomId();
+    const existingRoom = hasRedis ? await getRoom(roomId) : memoryRooms.get(roomId);
+    if (!existingRoom) return roomId;
+  }
 
-  return roomId;
+  throw new Error('Could not allocate room code');
 };
 
 const pruneMemoryRooms = () => {
@@ -80,6 +87,11 @@ const pruneMemoryRooms = () => {
 };
 
 const getPathParts = (request) => {
+  const queryRoomId = Array.isArray(request.query.roomId) ? request.query.roomId[0] : request.query.roomId;
+  const queryAction = Array.isArray(request.query.action) ? request.query.action[0] : request.query.action;
+
+  if (queryRoomId) return [String(queryRoomId).toUpperCase(), queryAction ? String(queryAction) : undefined];
+
   const rawPath = request.query.path;
   if (!rawPath) return [];
   return Array.isArray(rawPath) ? rawPath : [rawPath];
@@ -115,7 +127,17 @@ export default async function handler(request, response) {
     const body = getBody(request);
 
     if (request.method === 'GET' && !roomId) {
-      json(response, 200, { ok: true, rooms: hasRedis ? 'redis' : memoryRooms.size });
+      json(response, hasRedis || !requiresRedis ? 200 : 503, {
+        ok: hasRedis || !requiresRedis,
+        store: hasRedis ? 'redis' : 'memory',
+        rooms: hasRedis ? 'redis' : memoryRooms.size,
+        message: hasRedis || !requiresRedis ? 'Room API ready' : missingRedisMessage
+      });
+      return;
+    }
+
+    if (requiresRedis && !hasRedis) {
+      json(response, 503, { message: missingRedisMessage });
       return;
     }
 
@@ -125,7 +147,7 @@ export default async function handler(request, response) {
         return;
       }
 
-      const nextRoomId = createRoomId();
+      const nextRoomId = await createUniqueRoomId();
       const room = {
         roomId: nextRoomId,
         version: 1,
